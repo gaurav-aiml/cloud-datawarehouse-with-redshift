@@ -2,21 +2,24 @@ import configparser
 cfg = configparser.ConfigParser()
 cfg.read_file(open('dwh.cfg'))
 
+#S3 File locations
 LOG_DATA               = cfg.get("S3", "LOG_DATA")
 LOG_JSONPATH           = cfg.get("S3", "LOG_JSONPATH")
 SONG_DATA              = cfg.get("S3", "SONG_DATA")
+
+#IAM Role associated with Rdshift Cluster & S3
 IAM_ROLE_ARN           = cfg.get("IAM_ROLE","ARN")
 
 
 
 #DROP TABLES
-drop_songs_staging = "DROP TABLE IF EXTSTS songs_staging;"
-drop_logs_staging = "DROP TABLE IF EXTSTS logs_staging;"
-drop_users = "DROP TABLE IF EXTSTS users;"
-drop_songs = "DROP TABLE IF EXTSTS songs;"
-drop_artists = "DROP TABLE IF EXTSTS artists;"
-drop_time = "DROP TABLE IF EXTSTS time;"
-drop_songplays = "DROP TABLE IF EXTSTS songplays;"
+drop_songs_staging = "DROP TABLE IF EXISTS songs_staging;"
+drop_logs_staging = "DROP TABLE IF EXISTS logs_staging;"
+drop_users = "DROP TABLE IF EXISTS users;"
+drop_songs = "DROP TABLE IF EXISTS songs;"
+drop_artists = "DROP TABLE IF EXISTS artists;"
+drop_time = "DROP TABLE IF EXISTS time;"
+drop_songplays = "DROP TABLE IF EXISTS songplays;"
 
 #CREATE TABLES
 create_table_staging_songs = """
@@ -31,11 +34,10 @@ CREATE TABLE songs_staging (
     title               VARCHAR,
     duration            FLOAT,
     year                INTEGER
-)
+);
 """
 
-create_table_staging_logs = 
-"""
+create_table_staging_logs = """
 CREATE TABLE logs_staging(
     artist          VARCHAR,
     auth            VARCHAR ,
@@ -44,7 +46,7 @@ CREATE TABLE logs_staging(
     itemInSession   INTEGER,
     lastname        VARCHAR,
     length          FLOAT,
-    level           INTEGER,
+    level           VARCHAR,
     location        VARCHAR,
     method          VARCHAR,
     page            VARCHAR,
@@ -55,7 +57,7 @@ CREATE TABLE logs_staging(
     ts              TIMESTAMP,
     userAgent       VARCHAR,
     userId          INTEGER
-)
+);
 """
 
 
@@ -67,17 +69,17 @@ first_name  VARCHAR NOT NULL,
 last_name   VARCHAR NOT NULL,
 gender      CHAR NOT NULL,
 level       VARCHAR NOT NULL
-)
+);
 """
 
 create_table_songs = """
-CREATE TABLE users(
+CREATE TABLE songs(
 song_id       VARCHAR NOT NULL SORTKEY PRIMARY KEY,
 title         VARCHAR NOT NULL,
 artist_id     INTEGER NOT NULL,
 year          INTEGER NOT NULL,
-duration      FLOAT NOT NULL,
-)
+duration      FLOAT NOT NULL
+);
 """
 
 
@@ -86,7 +88,7 @@ CREATE TABLE artists (
     artist_id       VARCHAR NOT NULL SORTKEY PRIMARY KEY,
     name            VARCHAR NOT NULL,
     location        VARCHAR,
-    lattitude       FLOAT,
+    latitude        FLOAT,
     longitude       FLOAT
 )
 """
@@ -101,7 +103,7 @@ CREATE TABLE time (
     month       VARCHAR,
     year        VARCHAR,    
     weekday     VARCHAR
-)
+);
 """
 
 create_table_songplays = """
@@ -115,7 +117,7 @@ CREATE TABLE songplays(
     session_id      INTEGER NOT NULL,
     location        VARCHAR ,
     user_agent      VARCHAR 
-)
+);
 """
 
 
@@ -123,7 +125,7 @@ CREATE TABLE songplays(
 insert_into_logs_staging = f"""
 COPY logs_staging FROM {LOG_DATA}
 CREDENTIALS 'aws_iam_role={IAM_ROLE_ARN}'
-REGION 'us-east-1'
+REGION 'us-west-2'
 FORMAT AS JSON {LOG_JSONPATH}
 TIMEFORMAT AS 'epochmillisecs';
 """
@@ -131,8 +133,8 @@ TIMEFORMAT AS 'epochmillisecs';
 
 insert_into_songs_staging = f"""
 COPY songs_staging FROM {SONG_DATA}
-CREDENTIALS 'aws_iam_role={IAM_ROLE_ARN}
-REGION 'us-east-1'
+CREDENTIALS 'aws_iam_role={IAM_ROLE_ARN}'
+REGION 'us-west-2'
 FORMAT AS JSON 'auto';
 """
 
@@ -150,7 +152,7 @@ FROM
     logs_staging
 WHERE
     userId is NOT NULL;
-    AND page = "NextSong"
+    AND page = "NextSong";
 """
 
 insert_into_songs = """
@@ -200,7 +202,6 @@ WHERE
 """
 
 #INSERT INTO FACT TABLE
-
 insert_into_songplays = """
 
 INSERT INTO songplays(start_time, user_id, level, song_id, artist_id, session_id, location, user_agent)
@@ -220,42 +221,52 @@ FROM
 
 
 # ANALYTIC QUERIES
-get_number_logs_staging = ("""
-    SELECT COUNT(*) FROM logs_staging
-""")
+get_number_logs_staging = """
+    SELECT COUNT(1) FROM logs_staging;
+"""
 
-get_number_songs_staging = ("""
-    SELECT COUNT(*) FROM songs_staging
-""")
+get_number_songs_staging = """
+    SELECT COUNT(1) FROM songs_staging;
+"""
 
-get_number_songplays = ("""
-    SELECT COUNT(*) FROM songplays
-""")
+get_number_songplays = """
+    SELECT COUNT(1) FROM songplays;
+"""
 
-get_number_users = ("""
-    SELECT COUNT(*) FROM users
-""")
+get_number_users = """
+    SELECT COUNT(1) FROM users;
+"""
 
-get_number_songs = ("""
-    SELECT COUNT(*) FROM songs
-""")
+get_number_songs = """
+    SELECT COUNT(1) FROM songs;
+"""
 
-get_number_artists = ("""
-    SELECT COUNT(*) FROM artists
-""")
+get_number_artists = """
+    SELECT COUNT(1) FROM artists;
+"""
 
-get_number_time = ("""
-    SELECT COUNT(*) FROM time
-""")
-
-
-drop_table_queries = [drop_artists,drop_logs_staging,drop_songplays,drop_songs,drop_songs_staging,drop_table_queries,drop_time,drop_users]
+get_number_time = """
+    SELECT COUNT(1) FROM time;
+"""
 
 
+#Lists of queries to export from file
+
+#Queries to drop all the tables
+drop_table_queries = [drop_artists,drop_logs_staging,drop_songplays,drop_songs,drop_songs_staging,drop_time,drop_users]
+
+#Queries to create Staging Tables
 create_tables_staging = [create_table_staging_songs, create_table_staging_logs]
-create_tables_main = [create_table_users, create_table_songs, create_table_arists, create_table_time]
 
+#Queries to create Facts and Dimension Tables
+create_tables_main = [create_table_songs, create_table_arists, create_table_time, create_table_users]
+
+#Queries to EXTRACT content into Staging Tables
 copy_commands = [insert_into_logs_staging, insert_into_songs_staging]
+
+#Queries to TRANSFORM AND LOAD the required data into Fact and Dimension Tables
 insert_commands = [insert_into_artists,insert_into_songs, insert_into_time, insert_into_users, insert_into_songplays]
 
+
+#Queries to test if the data was successfully loaded in the Star Schema format
 analytic_queries = [get_number_users, get_number_time, get_number_artists, get_number_songs, get_number_songplays, get_number_songs_staging, get_number_logs_staging,]

@@ -2,3 +2,4 @@ reference/**
 postgres_docker/**
 secrets/**
 *.cfg
+*__*
