@@ -59,5 +59,3 @@ create_table_time= """ CREATE TABLE IF NOT EXISTS time (
 
 create_table_statements = [create_table_songplays, create_table_users, create_table_songs, create_table_artists, create_table_time]
 
-
-
