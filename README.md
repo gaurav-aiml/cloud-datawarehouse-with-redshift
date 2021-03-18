@@ -37,6 +37,8 @@ song_data/A/A/B/TRAABJL12903CDCF1A.json
 ```
 
 ## Data Warehouse Schema
+The following is the Star Schemas for the fact and dimension tables of the Data Warehouse
+
 ### Fact Table
 
 songplays - records in log data associated with song plays
