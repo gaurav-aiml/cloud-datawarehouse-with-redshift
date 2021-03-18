@@ -34,6 +34,7 @@ song_data/A/A/B/TRAABJL12903CDCF1A.json
 ***
 
 ## Data Warehouse Schema
+![Star_schema](images/ERD.png)
 The following is the Star Schemas for the fact and dimension tables of the Data Warehouse
 
 ### Fact Table
