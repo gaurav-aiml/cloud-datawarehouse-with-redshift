@@ -1,15 +1,9 @@
 # Cloud Data Warehouse with Redshift
-
-***
-
-
 ![PostgreSQL](https://img.shields.io/badge/-PostgreSQL-25273c?style=flat&logo=PostgreSQL)
 ![S3](https://img.shields.io/badge/-S3-25273c?style=flat&logo=amazon-aws)
 ![Redshift](https://img.shields.io/badge/-Redshift-25273c?style=flat&logo=amazon-aws)
 ![Python](https://img.shields.io/badge/-Python-25273c?style=flat&logo=python)
 ![Boto3](https://img.shields.io/badge/-Boto3-25273c?style=flat&logo=amazon-aws)
-
-***
 
 This main task of the project is to design a Cloud Data Warehouse for a fictional company called Sparkify, a music streaming platform like Spotify/Pandora. Sparkify has logged its data on user behaviour on its website. The log data, song data and JSON metadata about the  The data resides in an Amazon S3 Bucket.
 
